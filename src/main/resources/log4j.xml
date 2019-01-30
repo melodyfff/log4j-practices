@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
+<log4j:configuration xmlns:log4j='http://jakarta.apache.org/log4j/' >
+
+    <!-- 基本日志级别 -->
+    <!-- This rule is at the heart of log4j. It assumes that levels are ordered. For the standard levels, we have DEBUG < INFO < WARN < ERROR < FATAL. -->
+
+    <!-- 基本Appender -->
+    <!--org.apache.log4j.ConsoleAppender（控制台）-->
+    <!--org.apache.log4j.FileAppender（文件）-->
+    <!--org.apache.log4j.DailyRollingFileAppender（每天产生一个日志文件）-->
+    <!--org.apache.log4j.RollingFileAppender（文件大小到达指定尺寸的时候产生一个新的文件）-->
+    <!--org.apache.log4j.WriterAppender（将日志信息以流格式发送到任意指定的地方）-->
+
+    <appender name="Console" class="org.apache.log4j.ConsoleAppender">
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="[%d{yyyy-MM-dd HH:mm:ss:SSS}] [%X{Placeholder}] [%c] [%p] - %m - %l%n" />
+        </layout>
+
+        <!--过滤器设置输出的级别-->
+        <filter class="org.apache.log4j.varia.LevelRangeFilter">
+            <!--ALL < TRACE < DEBUG < INFO < WARN < ERROR < FATAL-->
+            <param name="levelMin" value="debug" />
+            <param name="levelMax" value="error" />
+            <param name="AcceptOnMatch" value="true" />
+        </filter>
+    </appender>
+
+
+    <appender name="dailyAppender" class="org.apache.log4j.DailyRollingFileAppender">
+        <param name="File" value="/opt/applog/log4j/daily.log" />
+        <param name="DatePattern" value="'.'yyyy-MM-dd'.log'" />
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="[%d{yyyy-MM-dd HH:mm:ss:SSS}] [%p] - %m - %l%n" />
+        </layout>
+    </appender>
+
+
+
+    <!-- 指定logger的设置，additivity指示是否遵循缺省的继承机制-->
+    <appender name="fileAppender" class="org.apache.log4j.RollingFileAppender">
+        <!-- 设置日志输出文件名 -->
+        <param name="File" value="/opt/applog/log4j/server.log" />
+        <!-- 默认10M -->
+        <param name="maxFileSize" value="10" />
+        <!-- 设置是否在重新启动服务时，在原有日志的基础添加新日志 -->
+        <param name="Append" value="true" />
+        <param name="MaxBackupIndex" value="10" />
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="%p (%c:%L)- %m%n" />
+        </layout>
+    </appender>
+
+    <!-- 指定logger的设置，additivity指示是否遵循缺省的继承机制-->
+    <appender name="customerAppender" class="com.xinchen.log.TimeAndRollingFileAppender">
+        <!-- 设置日志输出文件名 -->
+        <param name="File" value="/opt/applog/log4j/customer-server.log" />
+        <param name="datePattern" value="'.'yyyy-MM-dd"/>
+        <!-- 默认10M -->
+        <param name="maxFileSize" value="10" />
+        <!-- 设置是否在重新启动服务时，在原有日志的基础添加新日志 -->
+        <param name="Append" value="true" />
+        <param name="MaxBackupIndex" value="10" />
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="%p (%c:%L)- %m%n" />
+        </layout>
+    </appender>
+
+    <logger name="com" additivity="false">
+        <level value ="info"/>
+        <appender-ref ref="dailyAppender" />
+    </logger>
+
+    <!-- 根logger的设置-->
+    <root>
+        <priority value ="ALL"/>
+        <appender-ref ref="Console"/>
+        <appender-ref ref="fileAppender" />
+        <appender-ref ref="customerAppender" />
+    </root>
+
+</log4j:configuration>
