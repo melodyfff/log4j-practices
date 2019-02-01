@@ -19,7 +19,9 @@ import java.time.format.DateTimeFormatter;
 public class TimeAndRollingFileAppender extends RollingFileAppender {
     private long nextRollover = 0L;
 
-    protected String datePattern = "'.'yyyy-MM-dd";
+    private String datePattern = "'.'yyyyMMdd";
+    private String level = "";
+    private String suffix = "";
 
     @Override
     public void rollOver() {
@@ -32,23 +34,23 @@ public class TimeAndRollingFileAppender extends RollingFileAppender {
         LogLog.debug("maxBackupIndex=" + this.maxBackupIndex);
         boolean renameSucceeded = true;
         if (this.maxBackupIndex > 0) {
-            File file = new File(this.fileName + LocalDate.now().format(DateTimeFormatter.ofPattern(datePattern)) + this.maxBackupIndex);
+            File file = new File(this.nameBuilder(this.maxBackupIndex));
             if (file.exists()) {
                 renameSucceeded = file.delete();
             }
 
             File target;
             for(int i = this.maxBackupIndex - 1; i >= 1 && renameSucceeded; --i) {
-                file = new File(this.fileName  + LocalDate.now().format(DateTimeFormatter.ofPattern(datePattern))+ "." + i);
+                file = new File(this.nameBuilder(i));
                 if (file.exists()) {
-                    target = new File(this.fileName + LocalDate.now().format(DateTimeFormatter.ofPattern(datePattern)) + "."+ (i + 1));
+                    target = new File(this.nameBuilder(i + 1));
                     LogLog.debug("Renaming file " + file + " to " + target);
                     renameSucceeded = file.renameTo(target);
                 }
             }
 
             if (renameSucceeded) {
-                target = new File(this.fileName + LocalDate.now().format(DateTimeFormatter.ofPattern(datePattern))+ "." + 1);
+                target = new File(this.nameBuilder(1));
                 this.closeFile();
                 file = new File(this.fileName);
                 LogLog.debug("Renaming file " + file + " to " + target);
@@ -87,5 +89,35 @@ public class TimeAndRollingFileAppender extends RollingFileAppender {
 
     public void setDatePattern(String datePattern) {
         this.datePattern = datePattern;
+    }
+
+    public String getLevel() {
+        return level;
+    }
+
+    public void setLevel(String level) {
+        this.level = level;
+    }
+
+    public String getSuffix() {
+        return suffix;
+    }
+
+    public void setSuffix(String suffix) {
+        this.suffix = suffix;
+    }
+
+    /**
+     * 构建文件名,按照时间和备份号
+     * @param backupIndex 备份尾号
+     * @return 文件名 + 日期格式 + 日志等级 + 编号(%03d) + 尾缀
+     */
+    public String nameBuilder(int backupIndex){
+        // 前缀 + 日期格式 + 日志等级 + 编号 + 结尾
+        return this.fileName+
+                LocalDate.now().format(DateTimeFormatter.ofPattern(this.datePattern)) +
+                this.level +
+                String.format(".%03d", backupIndex) +
+                this.suffix;
     }
 }
