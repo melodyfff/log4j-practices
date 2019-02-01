@@ -21,7 +21,7 @@ public class TimeAndRollingFileAppender extends RollingFileAppender {
 
     private String datePattern = "'.'yyyyMMdd";
     private String level = "";
-    private String suffix = "";
+    private String suffix = ".log";
 
     @Override
     public void rollOver() {
@@ -83,6 +83,20 @@ public class TimeAndRollingFileAppender extends RollingFileAppender {
         }
     }
 
+    @Override
+    public void activateOptions() {
+        if (this.fileName != null) {
+            try {
+                this.setFile(this.nameBuilder(0), this.fileAppend, this.bufferedIO, this.bufferSize);
+            } catch (IOException var2) {
+                this.errorHandler.error("setFile(" + this.nameBuilder(1) + ") call failed.", var2, 4);
+            }
+        } else {
+            LogLog.warn("File option not set for appender [" + this.name + "].");
+            LogLog.warn("Are you using FileAppender instead of ConsoleAppender?");
+        }
+    }
+
     public String getDatePattern() {
         return datePattern;
     }
@@ -113,11 +127,11 @@ public class TimeAndRollingFileAppender extends RollingFileAppender {
      * @return 文件名 + 日期格式 + 日志等级 + 编号(%03d) + 尾缀
      */
     public String nameBuilder(int backupIndex){
-        // 前缀 + 日期格式 + 日志等级 + 编号 + 结尾
-        return this.fileName+
-                LocalDate.now().format(DateTimeFormatter.ofPattern(this.datePattern)) +
-                this.level +
-                String.format(".%03d", backupIndex) +
-                this.suffix;
+        if (0 == backupIndex){
+            // 前缀 + 日期格式 + 日志等级 + 编号 + 结尾
+            return this.fileName + LocalDate.now().format(DateTimeFormatter.ofPattern(this.datePattern)) + this.level + ".001" + this.suffix;
+        } else {
+            return this.fileName.replaceAll("\\.(([0-9]{1,3})(\\.log$))", String.format(".%03d.log", backupIndex));
+        }
     }
 }
