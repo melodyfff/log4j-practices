@@ -53,8 +53,9 @@
 
     <!-- 指定logger的设置，additivity指示是否遵循缺省的继承机制-->
     <appender name="customerAppender" class="com.xinchen.log.TimeAndRollingFileAppender">
+        <param name="Encoding" value="UTF-8"/>
         <!-- 设置日志输出文件名 -->
-        <param name="File" value="/opt/applog/log4j/customer-server" />
+        <param name="File" value="/opt/applog/log4j/customer-server.model" />
         <!-- 自定义拓展属性 -->
         <param name="datePattern" value=".yyyyMMdd"/>
         <param name="level" value=".info" />
