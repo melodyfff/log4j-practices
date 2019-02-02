@@ -19,9 +19,18 @@ import java.time.format.DateTimeFormatter;
 public class TimeAndRollingFileAppender extends RollingFileAppender {
     private long nextRollover = 0L;
 
-    private String datePattern = "'.'yyyyMMdd";
-    private String level = "";
+    private String datePattern = ".yyyyMMdd";
+    private String level = ".info";
     private String suffix = ".log";
+    private String original = "";
+
+
+    @Override
+    public void setFile(String file) {
+        String val = file.trim();
+        this.original = val;
+        this.fileName = this.nameBuilder(1);
+    }
 
     @Override
     public void rollOver() {
@@ -84,17 +93,11 @@ public class TimeAndRollingFileAppender extends RollingFileAppender {
     }
 
     @Override
-    public void activateOptions() {
-        if (this.fileName != null) {
-            try {
-                this.setFile(this.nameBuilder(0), this.fileAppend, this.bufferedIO, this.bufferSize);
-            } catch (IOException var2) {
-                this.errorHandler.error("setFile(" + this.nameBuilder(1) + ") call failed.", var2, 4);
-            }
-        } else {
-            LogLog.warn("File option not set for appender [" + this.name + "].");
-            LogLog.warn("Are you using FileAppender instead of ConsoleAppender?");
+    public synchronized void setFile(String fileName, boolean append, boolean bufferedIO, int bufferSize) throws IOException {
+        if (this.original.equals(this.fileName)){
+            this.fileName = this.nameBuilder(1);
         }
+        super.setFile(fileName, append, bufferedIO, bufferSize);
     }
 
     public String getDatePattern() {
@@ -127,11 +130,11 @@ public class TimeAndRollingFileAppender extends RollingFileAppender {
      * @return 文件名 + 日期格式 + 日志等级 + 编号(%03d) + 尾缀
      */
     public String nameBuilder(int backupIndex){
-        if (0 == backupIndex){
-            // 前缀 + 日期格式 + 日志等级 + 编号 + 结尾
-            return this.fileName + LocalDate.now().format(DateTimeFormatter.ofPattern(this.datePattern)) + this.level + ".001" + this.suffix;
-        } else {
-            return this.fileName.replaceAll("\\.(([0-9]{1,3})(\\.log$))", String.format(".%03d.log", backupIndex));
-        }
+        // 前缀 + 日期格式 + 日志等级 + 编号 + 结尾
+        return this.original +
+                LocalDate.now().format(DateTimeFormatter.ofPattern(this.datePattern)) +
+                this.level +
+                String.format(".%03d", backupIndex) +
+                this.suffix;
     }
 }
