@@ -66,3 +66,11 @@ Following table covers various modifiers scenarios:
 | %.30c  | NA  | none  |  30  | 从开始截断，如果类别名称超过30个字符长|
 | %20.30c  | false  | 20  |  30  | 用空格左侧垫，如果类别名称短于20个字符。<br>但是，如果类别名称长度超过30个字符，那么从开始截断。|
 | %-20.30c  | true  | 20  |  30  | 用空格右侧垫，如果类别名称短于20个字符。<br>但是，如果类别名称长度超过30个字符，那么从开始截断。|
+
+## 与springframework
+
+Spring中的强制日志记录依赖是`Jakarta Commons Logging API（JCL）`
+
+依赖`commons-logging`，来自中央模块的调用`spring-core`
+
+`Log4j 1.2`使用默认的JCL依赖项（`commons-logging`），您需要做的就是将Log4j放在类路径上，并为其提供配置文件（`log4j.properties`或`log4j.xml`在类路径的根目录中
