@@ -1,13 +1,67 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="WARN">
+
+    <!-- 自定义属性 -->
+    <Properties>
+        <Property name="baseDir">/opt/applog/log4j2</Property>
+        <Property name="Console_Pattern">%green{%d{[yyyy-MM-dd HH:mm:ss.SSS]}} [%-5level] [logger:%5logger{36}] [%magenta{%t}] [%C - %3M:%3L] - %cyan{%msg%n}</Property>
+        <Property name="File_Pattern">%d{[yyyy-MM-dd HH:mm:ss.SSS]} [%-5level] [logger:%5logger{36}] [%t] [%C - %3M:%3L] - %msg%n</Property>
+    </Properties>
+
+    <!-- 自定义日志级别 -->
+    <CustomLevels>
+        <!-- OFF-0|FATAL-100|ERROR-200|WARN-300|INFO-400|DEBUG-500|TRACE-600|ALL-Integer.MAX_VALUE -->
+        <CustomLevel name="NOTICE" intLevel="450" />
+    </CustomLevels>
+
+
     <Appenders>
         <Console name="Console" target="SYSTEM_OUT">
-            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %logger{36} %-5level %C - %msg%n"/>
+            <PatternLayout pattern="${Console_Pattern}"/>
         </Console>
+        <File name="fileAppender" fileName="${baseDir}/server.log">
+            <PatternLayout>
+                <Pattern>${File_Pattern}</Pattern>
+            </PatternLayout>
+        </File>
+
+        <File name="asyncFileAppender" fileName="${baseDir}/async-server.log">
+            <PatternLayout>
+                <Pattern>${File_Pattern}</Pattern>
+            </PatternLayout>
+        </File>
+
+        <Async name="AsyncAppender">
+            <AppenderRef ref="asyncFileAppender"/>
+        </Async>
+
+        <!-- 滚动日志 -->
+        <RollingFile name="rollingFileAppender" fileName="${baseDir}/app.log" filePattern="${baseDir}/app.model.%d{yyyyMMdd}.info.00%i.log">
+            <PatternLayout>
+                <Pattern>${File_Pattern}</Pattern>
+            </PatternLayout>
+            <DefaultRolloverStrategy min="1" max="9" />
+            <Policies>
+                <!--Cron表到式匹配滚动，每天0点 测试生成用每秒 0/1 * * * * ? *-->
+                <!--<CronTriggeringPolicy schedule="0 0 0 * * ?" />-->
+                <!--根据日期模式中最具体的时间单位进行翻转的频率 interval默认为1 -->
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+                <!--一旦文件达到指定大小 ，SizeBasedTriggeringPolicy将导致翻转。大小可以以字节为单位指定，后缀为KB，MB或GB-->
+                <SizeBasedTriggeringPolicy size="1MB"/>
+            </Policies>
+        </RollingFile>
+
     </Appenders>
+
+
     <Loggers>
-        <Root level="info">
+        <Root level="All">
             <AppenderRef ref="Console"/>
         </Root>
+        <logger name="OK" level="ALL">
+            <AppenderRef ref="fileAppender" />
+            <AppenderRef ref="AsyncAppender" />
+            <AppenderRef ref="rollingFileAppender" />
+        </logger>
     </Loggers>
 </Configuration>

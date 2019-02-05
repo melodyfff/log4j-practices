@@ -8,9 +8,16 @@ import org.apache.logging.log4j.Logger;
  */
 public class App {
 
-    private static final Logger log = LogManager.getLogger("ok");
+    private static final Logger log = LogManager.getLogger("OK");
 
     public static void main(String[] args) {
-        log.info("Hello World!");
+
+        for (int i = 0; i < 10000; i++) {
+            log.info("Hello World!");
+            log.debug("Hello World!");
+            log.error("Hello World!");
+            log.trace("Hello World!");
+        }
+
     }
 }
