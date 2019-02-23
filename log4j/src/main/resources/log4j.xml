@@ -26,6 +26,21 @@
         </filter>
     </appender>
 
+    <appender name="CustomerLogger" class="org.apache.log4j.ConsoleAppender">
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="[%d{yyyy-MM-dd HH:mm:ss:SSS}][%C][%p][%l:%L] - %m%n" />
+        </layout>
+
+        <!--过滤器设置输出的级别-->
+        <filter class="org.apache.log4j.varia.LevelRangeFilter">
+            <!--ALL < TRACE < DEBUG < INFO < WARN < ERROR < FATAL-->
+            <param name="levelMin" value="debug" />
+            <param name="levelMax" value="error" />
+            <param name="AcceptOnMatch" value="true" />
+        </filter>
+    </appender>
+
+
 
     <appender name="dailyAppender" class="org.apache.log4j.DailyRollingFileAppender">
         <param name="File" value="/opt/applog/log4j/daily.log" />
@@ -70,9 +85,14 @@
         </layout>
     </appender>
 
-    <logger name="com" additivity="false">
+    <logger name="com">
         <level value ="info"/>
         <appender-ref ref="dailyAppender" />
+    </logger>
+
+    <logger name="test.costomer.logger">
+        <level value ="info"/>
+        <appender-ref ref="CustomerLogger" />
     </logger>
 
     <!-- 根logger的设置-->
