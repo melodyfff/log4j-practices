@@ -74,3 +74,9 @@ Spring中的强制日志记录依赖是`Jakarta Commons Logging API（JCL）`
 依赖`commons-logging`，来自中央模块的调用`spring-core`
 
 `Log4j 1.2`使用默认的JCL依赖项（`commons-logging`），您需要做的就是将Log4j放在类路径上，并为其提供配置文件（`log4j.properties`或`log4j.xml`在类路径的根目录中
+
+
+## 对log4j日志再进行一层封装
+参考:
+> https://blog.csdn.net/u014437455/article/details/24143703
+> http://logging.apache.org/log4j/1.2/apidocs/org/apache/log4j/spi/LocationInfo.html
