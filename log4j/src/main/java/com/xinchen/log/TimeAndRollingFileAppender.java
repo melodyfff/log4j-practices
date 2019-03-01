@@ -124,6 +124,14 @@ public class TimeAndRollingFileAppender extends RollingFileAppender {
         this.suffix = suffix;
     }
 
+    public long getNextRollover() {
+        return nextRollover;
+    }
+
+    public void setNextRollover(long nextRollover) {
+        this.nextRollover = nextRollover;
+    }
+
     /**
      * 构建文件名,按照时间和备份号
      * @param backupIndex 备份尾号
