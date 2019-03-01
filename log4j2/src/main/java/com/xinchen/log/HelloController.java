@@ -14,15 +14,18 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @Controller
 public class HelloController {
 
-    private static final Logger log = LoggerFactory.getLogger(HelloController.class);
+    private static final Logger log = LoggerFactory.getLogger("helloWorld");
 
     @RequestMapping("/test")
     @ResponseBody
     public String test(){
-        log.info("Hello World!");
-        log.debug("Hello World!");
-        log.error("Hello World!");
-        log.trace("Hello World!");
+
+        for (int i =0;i<10;i++){
+            log.info("Hello World!");
+            log.debug("Hello World!");
+            log.error("Hello World!");
+            log.trace("Hello World!");
+        }
         return "Hello World!";
     }
 }

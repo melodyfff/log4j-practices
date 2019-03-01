@@ -52,29 +52,61 @@
                 <!--根据日期模式中最具体的时间单位进行翻转的频率 interval默认为1 -->
                 <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
                 <!--一旦文件达到指定大小 ，SizeBasedTriggeringPolicy将导致翻转。大小可以以字节为单位指定，后缀为KB，MB或GB-->
-                <SizeBasedTriggeringPolicy size="1MB"/>
+                <SizeBasedTriggeringPolicy size="1kb"/>
             </Policies>
         </RollingFile>
 
+
+        <CustomerAppender name="customer" fileName="${baseDir}/Customer.model.yyyyMMddHHmm.info.001.log" filePattern="${baseDir}/Customer.model.%d{yyyyMMddHHmm}.info.00%i.log">
+            <PatternLayout>
+                <Pattern>${File_Pattern}</Pattern>
+            </PatternLayout>
+            <DefaultRolloverStrategy min="2" max="9" />
+            <Policies>
+                <!--Cron表到式匹配滚动，每天0点 测试生成用每秒 0/1 * * * * ? *-->
+                <!--<CronTriggeringPolicy schedule="0 0 0 * * ?" />-->
+                <!--根据日期模式中最具体的时间单位进行翻转的频率 interval默认为1 -->
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+                <!--一旦文件达到指定大小 ，SizeBasedTriggeringPolicy将导致翻转。大小可以以字节为单位指定，后缀为KB，MB或GB-->
+                <SizeBasedTriggeringPolicy size="3KB"/>
+            </Policies>
+        </CustomerAppender>
+
+        <CustomerAppender name="hello" fileName="${baseDir}/hello.model.yyyyMMddHHmm.info.001.log" filePattern="${baseDir}/hello.model.%d{yyyyMMddHHmm}.info.00%i.log">
+            <PatternLayout>
+                <Pattern>${File_Pattern}</Pattern>
+            </PatternLayout>
+            <DefaultRolloverStrategy min="2" max="9" />
+            <Policies>
+                <!--Cron表到式匹配滚动，每天0点 测试生成用每秒 0/1 * * * * ? *-->
+                <!--<CronTriggeringPolicy schedule="0 0 0 * * ?" />-->
+                <!--根据日期模式中最具体的时间单位进行翻转的频率 interval默认为1 -->
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+                <!--一旦文件达到指定大小 ，SizeBasedTriggeringPolicy将导致翻转。大小可以以字节为单位指定，后缀为KB，MB或GB-->
+                <SizeBasedTriggeringPolicy size="3KB"/>
+            </Policies>
+        </CustomerAppender>
     </Appenders>
-
-
     <Loggers>
         <Root level="INFO">
             <AppenderRef ref="Console"/>
             <AppenderRef ref="rollingFileAppender" />
         </Root>
 
+        <logger name="org.springframework" level="all" >
+            <AppenderRef ref="Console"/>
+        </logger>
 
-        <!--<logger name="org.springframework" level="all" >-->
-            <!--<AppenderRef ref="Console"/>-->
-        <!--</logger>-->
+        <logger name="helloWorld" level="all" >
+        <AppenderRef ref="customer"/>
+        </logger>
 
 
         <logger name="OK" level="INFO">
             <AppenderRef ref="fileAppender" />
             <AppenderRef ref="AsyncAppender" />
             <AppenderRef ref="rollingFileAppender" />
+            <AppenderRef ref="customer" />
         </logger>
     </Loggers>
 </Configuration>
