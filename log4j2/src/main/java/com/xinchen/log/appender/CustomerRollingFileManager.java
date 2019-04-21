@@ -8,7 +8,6 @@ import org.apache.logging.log4j.core.appender.rolling.DirectWriteRolloverStrateg
 import org.apache.logging.log4j.core.appender.rolling.FileExtension;
 import org.apache.logging.log4j.core.appender.rolling.PatternProcessor;
 import org.apache.logging.log4j.core.appender.rolling.RollingFileManager;
-import org.apache.logging.log4j.core.appender.rolling.RolloverDescription;
 import org.apache.logging.log4j.core.appender.rolling.RolloverStrategy;
 import org.apache.logging.log4j.core.appender.rolling.TriggeringPolicy;
 import org.apache.logging.log4j.core.appender.rolling.action.AbstractAction;
@@ -24,7 +23,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.nio.ByteBuffer;
+import java.nio.file.Paths;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -65,7 +66,6 @@ public class CustomerRollingFileManager extends RollingFileManager {
     private static final AtomicReferenceFieldUpdater<CustomerRollingFileManager, PatternProcessor> patternProcessorUpdater = AtomicReferenceFieldUpdater.newUpdater(CustomerRollingFileManager.class, PatternProcessor.class, "patternProcessor");
 
     /**
-     *
      * @param loggerContext
      * @param fileName
      * @param pattern
@@ -89,11 +89,11 @@ public class CustomerRollingFileManager extends RollingFileManager {
         this.semaphore = new Semaphore(1);
         this.threadFactory = Log4jThreadFactory.createThreadFactory("CustomerRollingFileManager");
         this.fileExtension = FileExtension.lookupForFile(pattern);
-        this.asyncExecutor = new ThreadPoolExecutor(0, 2147483647, 0L, TimeUnit.MILLISECONDS, new CustomerRollingFileManager.EmptyQueue(), this.threadFactory);;
+        this.asyncExecutor = new ThreadPoolExecutor(0, 2147483647, 0L, TimeUnit.MILLISECONDS, new CustomerRollingFileManager.EmptyQueue(), this.threadFactory);
+        ;
     }
 
     /**
-     *
      * @param fileName
      * @param pattern
      * @param append
@@ -111,32 +111,31 @@ public class CustomerRollingFileManager extends RollingFileManager {
      * @param configuration
      * @return
      */
-    public static CustomerRollingFileManager getMyFileManager(String originalFileName,String fileName, String pattern, boolean append, boolean bufferedIO, TriggeringPolicy policy, RolloverStrategy strategy, String advertiseURI, Layout<? extends Serializable> layout, int bufferSize, boolean immediateFlush, boolean createOnDemand, String filePermissions, String fileOwner, String fileGroup, Configuration configuration) {
+    public static CustomerRollingFileManager getMyFileManager(String originalFileName, String fileName, String pattern, boolean append, boolean bufferedIO, TriggeringPolicy policy, RolloverStrategy strategy, String advertiseURI, Layout<? extends Serializable> layout, int bufferSize, boolean immediateFlush, boolean createOnDemand, String filePermissions, String fileOwner, String fileGroup, Configuration configuration) {
         if (strategy instanceof DirectWriteRolloverStrategy && fileName != null) {
             LOGGER.error("The fileName attribute must not be specified with the DirectWriteRolloverStrategy");
             return null;
         } else {
             String name = fileName == null ? pattern : fileName;
-            return getManage(originalFileName, new CustomerRollingFileManager.FactoryData(fileName, pattern, append, bufferedIO, policy, strategy, advertiseURI, layout, bufferSize, immediateFlush, createOnDemand, filePermissions, fileOwner, fileGroup, configuration),factory);
+            return getManage(originalFileName, new CustomerRollingFileManager.FactoryData(fileName, pattern, append, bufferedIO, policy, strategy, advertiseURI, layout, bufferSize, immediateFlush, createOnDemand, filePermissions, fileOwner, fileGroup, configuration), factory);
 //            return narrow(CustomerRollingFileManager.class, getManager(name, , factory));
         }
     }
 
     /**
-     *
      * @param name
      * @param data
      * @param factory
      * @return
      */
-    public static CustomerRollingFileManager getManage(String name,CustomerRollingFileManager.FactoryData data,CustomerRollingFileManager.RollingFileManagerFactory factory){
+    public static CustomerRollingFileManager getManage(String name, CustomerRollingFileManager.FactoryData data, CustomerRollingFileManager.RollingFileManagerFactory factory) {
         LOCK.lock();
         CustomerRollingFileManager customerRollingFileManager;
-        try{
+        try {
             CustomerRollingFileManager manager = MAP.get(name);
-            if (null == manager){
+            if (null == manager) {
                 manager = factory.createManager(name, data);
-                if (manager == null){
+                if (manager == null) {
                     throw new IllegalStateException("ManagerFactory [" + factory + "] unable to create manager for [" + name + "] with data [" + data + "]");
                 }
                 MAP.put(name, manager);
@@ -153,19 +152,17 @@ public class CustomerRollingFileManager extends RollingFileManager {
 
 
     /**
-     *
      * @param data
      */
     @Override
     public void updateData(Object data) {
-        CustomerRollingFileManager.FactoryData factoryData = (CustomerRollingFileManager.FactoryData)data;
+        CustomerRollingFileManager.FactoryData factoryData = (CustomerRollingFileManager.FactoryData) data;
         this.setRolloverStrategy(factoryData.getRolloverStrategy());
         this.setTriggeringPolicy(factoryData.getTriggeringPolicy());
         this.setPatternProcessor(new PatternProcessor(factoryData.getPattern(), this.getPatternProcessor()));
     }
 
     /**
-     *
      * @return
      */
     @Override
@@ -174,63 +171,12 @@ public class CustomerRollingFileManager extends RollingFileManager {
     }
 
     /**
-     *
      * @param fileName
      */
     public void setFileName(String fileName) {
         this.fileName = fileName;
     }
 
-    private boolean rollover(RolloverStrategy strategy) {
-        boolean releaseRequired = false;
-
-        try {
-            this.semaphore.acquire();
-            releaseRequired = true;
-        } catch (InterruptedException var11) {
-            this.logError("Thread interrupted while attempting to check rollover", var11);
-            return false;
-        }
-
-        boolean success = true;
-
-        boolean var5;
-        try {
-            RolloverDescription descriptor = strategy.rollover(this);
-            if (descriptor != null) {
-                this.writeFooter();
-                this.closeOutputStream();
-                if (descriptor.getSynchronous() != null) {
-                    LOGGER.debug("RollingFileManager executing synchronous {}", descriptor.getSynchronous());
-
-                    try {
-                        success = descriptor.getSynchronous().execute();
-                    } catch (Exception var10) {
-                        success = false;
-                        this.logError("Caught error in synchronous task", var10);
-                    }
-                }
-
-                if (success && descriptor.getAsynchronous() != null) {
-                    LOGGER.debug("RollingFileManager executing async {}", descriptor.getAsynchronous());
-                    this.asyncExecutor.execute(new CustomerRollingFileManager.AsyncAction(descriptor.getAsynchronous(), this));
-                    releaseRequired = false;
-                }
-
-                var5 = true;
-                return var5;
-            }
-
-            var5 = false;
-        } finally {
-            if (releaseRequired) {
-                this.semaphore.release();
-            }
-
-        }
-
-        return var5;
-    }
 
     private static class EmptyQueue extends ArrayBlockingQueue<Runnable> {
         private static final long serialVersionUID = 1L;
@@ -268,6 +214,60 @@ public class CustomerRollingFileManager extends RollingFileManager {
                 return false;
             }
         }
+    }
+
+
+    @Override
+    public synchronized void rollover() {
+        super.rollover();
+    }
+
+    @Override
+    protected void createFileAfterRollover() throws IOException {
+        super.createFileAfterRollover();
+    }
+
+    @Override
+    protected OutputStream createOutputStream() throws IOException {
+        String filename = chcekNewFileName(this.getFileName());
+        LOGGER.debug("Now writing to {} at {}", filename, new Date());
+
+        this.setFileName(filename);
+        FileOutputStream fos = new FileOutputStream(filename, true);
+        this.defineAttributeView(Paths.get(filename));
+        return fos;
+    }
+
+    private String chcekNewFileName(String fileName) {
+        String org = fileName.replaceAll("\\.[0-9]{3}\\.", String.format("\\.%03d\\.", 1));
+        String sp = fileName.replaceAll("\\.[0-9]{3}\\.", String.format("\\.%03d\\.", 2));
+        String spp = fileName.replaceAll("\\.[0-9]{3}\\.", String.format("\\.%03d\\.", 3));
+        File orgFile = new File(org);
+        File spFile = new File(sp);
+        File sppFile = new File(spp);
+
+        if (spFile.exists()&&!orgFile.exists() && !sppFile.exists()){
+            if (spFile.renameTo(orgFile)){
+                return sp;
+            }
+        }
+
+
+        for (int i = 4; i < 10; i++) {
+            String pre = fileName.replaceAll("\\.[0-9]{3}\\.", String.format("\\.%03d\\.", i - 1));
+            String next = fileName.replaceAll("\\.[0-9]{3}\\.", String.format("\\.%03d\\.", i));
+            File nextFile = new File(next);
+            File preFile = new File(pre);
+
+
+            if (!nextFile.exists() && preFile.exists()) {
+                if (preFile.renameTo(new File(org))) {
+                    return pre;
+                }
+            }
+
+        }
+        return fileName;
     }
 
     private static class RollingFileManagerFactory implements ManagerFactory<CustomerRollingFileManager, FactoryData> {
@@ -330,7 +330,6 @@ public class CustomerRollingFileManager extends RollingFileManager {
         private final String fileGroup;
 
         /**
-         *
          * @param fileName
          * @param pattern
          * @param append
@@ -370,7 +369,6 @@ public class CustomerRollingFileManager extends RollingFileManager {
         }
 
         /**
-         *
          * @return
          */
         public RolloverStrategy getRolloverStrategy() {
@@ -378,7 +376,6 @@ public class CustomerRollingFileManager extends RollingFileManager {
         }
 
         /**
-         *
          * @return String
          */
         public String getPattern() {
@@ -386,7 +383,6 @@ public class CustomerRollingFileManager extends RollingFileManager {
         }
 
         /**
-         *
          * @return String
          */
         @Override
@@ -423,8 +419,7 @@ public class CustomerRollingFileManager extends RollingFileManager {
         private final CustomerRollingFileManager manager;
 
         /**
-         *
-         * @param act Action
+         * @param act     Action
          * @param manager CustomerRollingFileManager
          */
         public AsyncAction(Action act, CustomerRollingFileManager manager) {
@@ -433,7 +428,6 @@ public class CustomerRollingFileManager extends RollingFileManager {
         }
 
         /**
-         *
          * @return boolean
          * @throws IOException IOException
          */
@@ -456,8 +450,8 @@ public class CustomerRollingFileManager extends RollingFileManager {
         public void close() {
             this.action.close();
         }
+
         /**
-         *
          * @return boolean
          */
         @Override
@@ -466,7 +460,6 @@ public class CustomerRollingFileManager extends RollingFileManager {
         }
 
         /**
-         *
          * @return String
          */
         @Override
