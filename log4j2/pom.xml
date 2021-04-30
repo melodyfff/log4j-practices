@@ -20,7 +20,7 @@
     <log4j.version>2.11.1</log4j.version>
     <slf4j-api.version>1.7.25</slf4j-api.version>
     <junit.version>4.12</junit.version>
-    <spring.version>4.3.18.RELEASE</spring.version>
+    <spring.version>4.3.29.RELEASE</spring.version>
   </properties>
 
   <dependencies>
